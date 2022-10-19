@@ -1,7 +1,9 @@
-п»їimport React, { useState } from 'react';
+/*Функциональные компоненты*/
+/*Компонент Counter(которая должна быть всегда с большой буквой) - это функция, которая возвращает jsx*/
+import React, { useState } from 'react';
 
-const Counter = function (props) {
-    const [count, setCount] = useState(props.init)
+const Counter = function () {
+    const [count, setCount] = useState(0)
 
     function increment() {
         setCount(count + 1)
