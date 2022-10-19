@@ -1,4 +1,4 @@
-﻿import React, { Children, useState } from 'react';
+﻿import React from 'react';
 import cl from './MyModal.module.css';
 
 const MyModal = ({ children, visible, setVisible }) => {

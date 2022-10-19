@@ -1,64 +1,76 @@
-import React, { useEffect, useState } from 'react';
-import '../styles/App.css';
-import PostList from '../components/PostList';
-import PostForm from '../components/PostForm';
-import PostFilter from '../components/PostFilter';
-import MyModal from '../components/UI/MyModal/MyModal';
-import MyButton from '../components/UI/button/MyButton';
-import { usePosts } from '../hooks/usePosts';
+п»їimport React, { useEffect, useState, useRef } from 'react';
 import PostService from '../API/PostService';
+import ClassCounter from '../components/ClassCounter';
+import Counter from '../components/Counter';
+import Pagitaion from '../components/Pagination';
+import PostFilter from '../components/PostFilter';
+import PostForm from '../components/PostForm';
+import PostList from '../components/PostList';
+import MyButton from '../components/UI/button/MyButton';
 import Loader from '../components/UI/Loader/Loader';
+import MyModal from '../components/UI/MyModal/MyModal';
 import { useFetching } from '../hooks/useFetching';
+import { userObserver } from '../hooks/useObserver';
+import { usePosts } from '../hooks/usePosts';
+import '../styles/App.css';
 import { getPageCount } from '../utils/pages';
-import Pagination from '../components/UI/pagination/Pagination';
+import { useObserver } from '../hooks/useObserver';
+import MySelect from '../components/UI/select/MySelect';
 
 function Posts() {
     const [posts, setPosts] = useState([])
-    /*Созаём двустороннее связывание, для этого создаём новое состояние selectedSort, с помощью useState инициализируем и по умолчанию это будет пустая строка*/
+    /*РЎРѕР·Р°С‘Рј РґРІСѓСЃС‚РѕСЂРѕРЅРЅРµРµ СЃРІСЏР·С‹РІР°РЅРёРµ, РґР»СЏ СЌС‚РѕРіРѕ СЃРѕР·РґР°С‘Рј РЅРѕРІРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ selectedSort, СЃ РїРѕРјРѕС‰СЊСЋ useState РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј Рё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ СЌС‚Рѕ Р±СѓРґРµС‚ РїСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР°*/
     const [filter, setFilter] = useState({ sort: '', query: '' })
-    /*Состояние, которое будет отвечать за то, что видно модальное окно или нет и чтобы мы этим могли динамически управлять. Например показывать модальное окно, при нажатии на кнопку*/
+    /*РЎРѕСЃС‚РѕСЏРЅРёРµ, РєРѕС‚РѕСЂРѕРµ Р±СѓРґРµС‚ РѕС‚РІРµС‡Р°С‚СЊ Р·Р° С‚Рѕ, С‡С‚Рѕ РІРёРґРЅРѕ РјРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ РёР»Рё РЅРµС‚ Рё С‡С‚РѕР±С‹ РјС‹ СЌС‚РёРј РјРѕРіР»Рё РґРёРЅР°РјРёС‡РµСЃРєРё СѓРїСЂР°РІР»СЏС‚СЊ. РќР°РїСЂРёРјРµСЂ РїРѕРєР°Р·С‹РІР°С‚СЊ РјРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ, РїСЂРё РЅР°Р¶Р°С‚РёРё РЅР° РєРЅРѕРїРєСѓ*/
     const [modal, setModal] = useState(false);
-    /*Состояник, в котором мы будем помещать общее количество постов*/
+    /*РЎРѕСЃС‚РѕСЏРЅРёРє, РІ РєРѕС‚РѕСЂРѕРј РјС‹ Р±СѓРґРµРј РїРѕРјРµС‰Р°С‚СЊ РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕСЃС‚РѕРІ*/
     const [totalPages, setTotalPages] = useState(0);
     const [limit, setLimit] = useState(10);
     const [page, setPage] = useState(1);
     const sortedAndSearchPosts = usePosts(posts, filter.sort, filter.query);
+    const lastElement = useRef();
 
     const [fetchPosts, isPostsLoading, postError] = useFetching(async (limit, page) => {
         const response = await PostService.getAll(limit, page);
-        setPosts(response.data) /*Вызываем функцию setPosts и передаём туда все 100 постов, который  вернул нам сервер*/
+        setPosts([...posts, ...response.data]); /*Р’С‹Р·С‹РІР°РµРј С„СѓРЅРєС†РёСЋ setPosts Рё РїРµСЂРµРґР°С‘Рј С‚СѓРґР° РІСЃРµ 100 РїРѕСЃС‚РѕРІ, РєРѕС‚РѕСЂС‹Р№  РІРµСЂРЅСѓР» РЅР°Рј СЃРµСЂРІРµСЂ*/
         const totalCount = response.headers['x-total-count']
         setTotalPages(getPageCount(totalCount, limit));
     })
 
+    useObserver(lastElement, page < totalPages, isPostsLoading, () => {
+        setPage(page + 1);
+    });
+
     useEffect(() => {
-        fetchPosts(limit, page)
-    }, [page])
+        fetchPosts(limit, page);
+    }, [page, limit]);
 
-    /*Создание постов*/
+    /*РЎРѕР·РґР°РЅРёРµ РїРѕСЃС‚РѕРІ*/
     const createPost = (newPost) => {
-        setPosts([...posts, newPost])
-        setModal(false) /*Закрытие модального окна*/
-    }
+        setPosts([...posts, newPost]);
+        setModal(false) /*Р—Р°РєСЂС‹С‚РёРµ РјРѕРґР°Р»СЊРЅРѕРіРѕ РѕРєРЅР°*/
+    };
 
-    /*Получаем post из дочернего компонента*/
-    /*Удаление постов*/
+    /*РџРѕР»СѓС‡Р°РµРј post РёР· РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р°*/
+    /*РЈРґР°Р»РµРЅРёРµ РїРѕСЃС‚РѕРІ*/
     const removePost = (post) => {
-        setPosts(posts.filter(p => p.id !== post.id)) /*Проверка id, если id какого-то элемента из массива равен тому id, который мы передали постов, то тогда просто этот элемент из массива удаляем*/
-    }
+        setPosts(posts.filter(p => p.id !== post.id)); /*РџСЂРѕРІРµСЂРєР° id, РµСЃР»Рё id РєР°РєРѕРіРѕ-С‚Рѕ СЌР»РµРјРµРЅС‚Р° РёР· РјР°СЃСЃРёРІР° СЂР°РІРµРЅ С‚РѕРјСѓ id, РєРѕС‚РѕСЂС‹Р№ РјС‹ РїРµСЂРµРґР°Р»Рё РїРѕСЃС‚РѕРІ, С‚Рѕ С‚РѕРіРґР° РїСЂРѕСЃС‚Рѕ СЌС‚РѕС‚ СЌР»РµРјРµРЅС‚ РёР· РјР°СЃСЃРёРІР° СѓРґР°Р»СЏРµРј*/
+    };
 
-    /*Функция, которая будет изменять номер страницы и с изменённым номером страницы сразу подгружать новую порцию данных*/
+    /*Р¤СѓРЅРєС†РёСЏ, РєРѕС‚РѕСЂР°СЏ Р±СѓРґРµС‚ РёР·РјРµРЅСЏС‚СЊ РЅРѕРјРµСЂ СЃС‚СЂР°РЅРёС†С‹ Рё СЃ РёР·РјРµРЅС‘РЅРЅС‹Рј РЅРѕРјРµСЂРѕРј СЃС‚СЂР°РЅРёС†С‹ СЃСЂР°Р·Сѓ РїРѕРґРіСЂСѓР¶Р°С‚СЊ РЅРѕРІСѓСЋ РїРѕСЂС†РёСЋ РґР°РЅРЅС‹С…*/
     const changePage = (page) => {
-        setPage(page)
-        fetchPosts(limit, page)
-    }
+        setPage(page);
+    };
 
     return (
         <div className="App">
+            <Counter init={5} />
+            <ClassCounter />
+
             <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)}>
-                Создать пользователя
+                РЎРѕР·РґР°С‚СЊ СЌР»РµРјРµРЅС‚
             </MyButton>
-            <MyModal visible={modal} setVisible={setModal}>
+            <MyModal visible={modal} setVisible={setModal} >
                 <PostForm create={createPost} />
             </MyModal>
             <hr style={{ margin: '15px 0' }} />
@@ -66,33 +78,47 @@ function Posts() {
                 filter={filter}
                 setFilter={setFilter}
             />
-            {/*Проверка над списком постов, если в postError что-то находится, то тогда будем показывать заголовок h1 и выводить сообщение об ошибке*/}
-            {postError &&
-                <h1>Произошла ошибка &{postError}</h1>
-            }
-            {/*Проверка, если условие равняется true, то будем показывать некоторую крутилку, в обратном случае будем показывать список постов*/}
-            {isPostsLoading
-                ? <div style={{ display: 'flex', justifyContent: 'center', marginTop: 50 }} ><Loader /></div>
-                : <PostList remove={removePost} posts={sortedAndSearchPosts} title="Посты про JS" />
-            }
-            {/*Передача номер страницы, функция которой этот номер изменяет, эта функция ChangePage и общее кол-во страниц, это состояние totalPages*/}
-            <Pagination
-                page={page}
-                changePage={changePage}
-                totalPages={totalPages}
+            <MySelect
+                value={limit}
+                onChange={value => setLimit(value)}
+                defaultValue='РћР±СЉРµРј СЃС‚СЂР°РЅРёС†С‹'
+                options={[
+                    { value: 5, name: '5' },
+                    { value: 10, name: '10' },
+                    { value: 15, name: '15' },
+                    { value: 20, name: '20' },
+                    { value: -1, name: 'Р’СЃРµ РїРѕСЃС‚С‹' },
+                ]}
             />
-        </div >
+
+            {postError &&
+                <h1>РћС€РёР±РєР°: {postError}</h1>
+            }
+
+            <PostList remove={removePost} posts={sortedSearchedPosts} title='РЎРїРёСЃРѕРє РїРѕСЃС‚РѕРІ' />
+            <div ref={lastElement}></div>
+            {isPostsLoading &&
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 50 }}>
+                    <Loader />
+                </div>}
+            {/*РџРµСЂРµРґР°С‡Р° РЅРѕРјРµСЂ СЃС‚СЂР°РЅРёС†С‹, С„СѓРЅРєС†РёСЏ РєРѕС‚РѕСЂРѕР№ СЌС‚РѕС‚ РЅРѕРјРµСЂ РёР·РјРµРЅСЏРµС‚, СЌС‚Р° С„СѓРЅРєС†РёСЏ ChangePage Рё РѕР±С‰РµРµ РєРѕР»-РІРѕ СЃС‚СЂР°РЅРёС†, СЌС‚Рѕ СЃРѕСЃС‚РѕСЏРЅРёРµ totalPages*/}
+            <Pagitaion
+                totalPages={totalPages}
+                page={page}
+                changePage={changePage} />
+        </div>
     );
 }
 
 export default Posts;
 
-//React хуки
-//useState() - предназначен для управления состоянием
-//useEffect(callback, deps) - хук можно использовать столько раз в компоненте сколько необходимо. Один хук следит за одними данными, другой хук следит за изменениями других данных, третий хук отрабатывает первичные отрисовки. Он также принимает некторый callback и некоторый массив зависимостей.
-  //Когда массив зависимостей пустой, callback который передаётся в useEffect отработает лишь единожды, когда компонент был вмонтирован, таким образом можно отследить эту стадию монтирования и выполнить нужные дейсвия
+//React С…СѓРєРё
+//useState() - РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРѕСЃС‚РѕСЏРЅРёРµРј
+//useEffect(callback, deps) - С…СѓРє РјРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃС‚РѕР»СЊРєРѕ СЂР°Р· РІ РєРѕРјРїРѕРЅРµРЅС‚Рµ СЃРєРѕР»СЊРєРѕ РЅРµРѕР±С…РѕРґРёРјРѕ. РћРґРёРЅ С…СѓРє СЃР»РµРґРёС‚ Р·Р° РѕРґРЅРёРјРё РґР°РЅРЅС‹РјРё, РґСЂСѓРіРѕР№ С…СѓРє СЃР»РµРґРёС‚ Р·Р° РёР·РјРµРЅРµРЅРёСЏРјРё РґСЂСѓРіРёС… РґР°РЅРЅС‹С…, С‚СЂРµС‚РёР№ С…СѓРє РѕС‚СЂР°Р±Р°С‚С‹РІР°РµС‚ РїРµСЂРІРёС‡РЅС‹Рµ РѕС‚СЂРёСЃРѕРІРєРё. РћРЅ С‚Р°РєР¶Рµ РїСЂРёРЅРёРјР°РµС‚ РЅРµРєС‚РѕСЂС‹Р№ callback Рё РЅРµРєРѕС‚РѕСЂС‹Р№ РјР°СЃСЃРёРІ Р·Р°РІРёСЃРёРјРѕСЃС‚РµР№.
+  //РљРѕРіРґР° РјР°СЃСЃРёРІ Р·Р°РІРёСЃРёРјРѕСЃС‚РµР№ РїСѓСЃС‚РѕР№, callback РєРѕС‚РѕСЂС‹Р№ РїРµСЂРµРґР°С‘С‚СЃСЏ РІ useEffect РѕС‚СЂР°Р±РѕС‚Р°РµС‚ Р»РёС€СЊ РµРґРёРЅРѕР¶РґС‹, РєРѕРіРґР° РєРѕРјРїРѕРЅРµРЅС‚ Р±С‹Р» РІРјРѕРЅС‚РёСЂРѕРІР°РЅ, С‚Р°РєРёРј РѕР±СЂР°Р·РѕРј РјРѕР¶РЅРѕ РѕС‚СЃР»РµРґРёС‚СЊ СЌС‚Сѓ СЃС‚Р°РґРёСЋ РјРѕРЅС‚РёСЂРѕРІР°РЅРёСЏ Рё РІС‹РїРѕР»РЅРёС‚СЊ РЅСѓР¶РЅС‹Рµ РґРµР№СЃРІРёСЏ
 //useRef()
-//useMemo(callback, deps) - первым параметром этот хук принимает некоторый callback, некоторую функцию обратного вызова, а вторым параметром принимает массив зависимостей.
-   //callback должен возвращать результат каких-то вычислений, например от сортированный массив или же отфильтрованный массив, какие-то математические операции, вообщем результат каких-то вычислений
+//useMemo(callback, deps) - РїРµСЂРІС‹Рј РїР°СЂР°РјРµС‚СЂРѕРј СЌС‚РѕС‚ С…СѓРє РїСЂРёРЅРёРјР°РµС‚ РЅРµРєРѕС‚РѕСЂС‹Р№ callback, РЅРµРєРѕС‚РѕСЂСѓСЋ С„СѓРЅРєС†РёСЋ РѕР±СЂР°С‚РЅРѕРіРѕ РІС‹Р·РѕРІР°, Р° РІС‚РѕСЂС‹Рј РїР°СЂР°РјРµС‚СЂРѕРј РїСЂРёРЅРёРјР°РµС‚ РјР°СЃСЃРёРІ Р·Р°РІРёСЃРёРјРѕСЃС‚РµР№.
+   //callback РґРѕР»Р¶РµРЅ РІРѕР·РІСЂР°С‰Р°С‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚ РєР°РєРёС…-С‚Рѕ РІС‹С‡РёСЃР»РµРЅРёР№, РЅР°РїСЂРёРјРµСЂ РѕС‚ СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Р№ РјР°СЃСЃРёРІ РёР»Рё Р¶Рµ РѕС‚С„РёР»СЊС‚СЂРѕРІР°РЅРЅС‹Р№ РјР°СЃСЃРёРІ, РєР°РєРёРµ-С‚Рѕ РјР°С‚РµРјР°С‚РёС‡РµСЃРєРёРµ РѕРїРµСЂР°С†РёРё, РІРѕРѕР±С‰РµРј СЂРµР·СѓР»СЊС‚Р°С‚ РєР°РєРёС…-С‚Рѕ РІС‹С‡РёСЃР»РµРЅРёР№
 //useCallback()
-//useContext()
+//useContext() - РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ РЅРµРєРѕС‚РѕСЂРѕРµ РіР»РѕР±Р°Р»СЊРЅРѕРµ С…СЂР°РЅРёР»РёС‰Рµ РёР· Р»СЋР±РѕРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° Рє СЌС‚РѕРјСѓ РіР»РѕР±Р°Р»СЊРЅРѕРјСѓ С…СЂР°РЅРёР»РёС‰Рµ РѕР±СЂР°С‰Р°С‚СЊСЃСЏ, РїСЂРё СЌС‚РѕРј РёР·Р±РµРіР°СЏ СЌС‚РѕР№ РїРµСЂРµРґР°С‡Рё СЂРѕРґРёРёС‚РµР»СЏ Рє СЂРµР±С‘РЅРєСѓ
+/*useNavigate - РІРѕР·РІСЂР°С‰Р°РµС‚ С„СѓРЅРєС†РёСЋ, РєРѕС‚РѕСЂР°СЏ РїРѕР·РІРѕР»СЏРµС‚ РїСЂРѕРіСЂР°РјРјРЅРѕ РїРµСЂРµРјРµС‰Р°С‚СЊСЃСЏ*/

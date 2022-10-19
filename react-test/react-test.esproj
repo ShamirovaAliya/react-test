@@ -17,6 +17,7 @@
     <Folder Include="src\components\UI\pagination\" />
     <Folder Include="src\styles\" />
     <Folder Include="src\utils\" />
-    <Folder Include="src\pages\" />
+    <Folder Include="src\router\" />
+    <Folder Include="src\context\" />
   </ItemGroup>
 </Project>
