@@ -95,7 +95,7 @@ function Posts() {
                 <h1>Ошибка: {postError}</h1>
             }
 
-            <PostList remove={removePost} posts={sortedSearchedPosts} title='Список постов' />
+            <PostList remove={removePost} posts={sortedAndSearchPosts} title='Список постов' />
             <div ref={lastElement}></div>
             {isPostsLoading &&
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 50 }}>

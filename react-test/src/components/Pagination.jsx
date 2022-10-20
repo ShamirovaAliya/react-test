@@ -1,10 +1,10 @@
 ﻿import React from 'react';
-import { getPageArray } from '../utils/pages';
+import { getPagesArray } from '../utils/pages';
 
 
 /*Нумерация страниц*/
 const Pagitaion = ({ totalPages, page, changePage }) => {
-    let pagesArray = getPageArray(totalPages);
+    let pagesArray = getPagesArray(totalPages);
 
     return (
         <div className="page__wrapper">
