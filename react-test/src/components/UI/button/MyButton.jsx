@@ -1,10 +1,10 @@
-import React from 'react';
+п»їimport React from 'react';
 import classes from './MyButton.module.css';
 
 const MyButton = ({children, ...props}) => {
     return (
         <button {...props} className={classes.myBtn}>
-            {children} {/*Специальный props, который называется children, чтобы внутри тега (button, p, div и т.д.) был виден текст*/}
+            {children} {/*РЎРїРµС†РёР°Р»СЊРЅС‹Р№ props, РєРѕС‚РѕСЂС‹Р№ РЅР°Р·С‹РІР°РµС‚СЃСЏ children, С‡С‚РѕР±С‹ РІРЅСѓС‚СЂРё С‚РµРіР° (button, p, div Рё С‚.Рґ.) Р±С‹Р» РІРёРґРµРЅ С‚РµРєСЃС‚*/}
         </button>
     );
 };

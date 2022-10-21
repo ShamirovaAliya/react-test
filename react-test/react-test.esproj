@@ -12,11 +12,7 @@
     <BuildOutputFolder>$(MSBuildProjectDirectory)\build</BuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="src\components\UI\button\" />
-    <Folder Include="src\components\UI\input\" />
-    <Folder Include="src\components\UI\pagination\" />
     <Folder Include="src\styles\" />
-    <Folder Include="src\utils\" />
-    <Folder Include="src\pages\" />
+    <Folder Include="src\router\" />
   </ItemGroup>
 </Project>
